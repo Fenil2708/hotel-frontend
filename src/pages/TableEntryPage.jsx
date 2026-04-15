@@ -24,7 +24,7 @@ export default function TableEntryPage() {
       const res = await api.post("/table/start", { 
         tableNumber: Number(tableNumber),
         guests: Number(guests),
-        customerId: auth?.user?.id 
+        customerId: auth?.user?.id || auth?.user?._id
       });
       setTableSession({
         sessionId: res.data.sessionId,
