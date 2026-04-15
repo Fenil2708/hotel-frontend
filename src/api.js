@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const API_URL = "http://localhost:5000/api";
+export const API_URL = import.meta.env.VITE_API_URL;
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -13,7 +13,7 @@ export const authHeaders = (token) => ({
 });
 
 export const tableHeaders = (token) => ({
-    headers: {
-        "x-table-session-token": token,
-    }
+  headers: {
+    "x-table-session-token": token,
+  },
 });
