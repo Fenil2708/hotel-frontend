@@ -22,8 +22,8 @@ export function TableSessionProvider({ children }) {
     setSession(next);
   }, []);
 
-  const startSession = useCallback(async (tableNumber) => {
-    const { data } = await api.post("/table/start", { tableNumber });
+  const startSession = useCallback(async (tableNumber, accessCode) => {
+    const { data } = await api.post("/table/start", { tableNumber, accessCode });
     const next = {
       tableSessionToken: data.tableSessionToken,
       sessionId: data.sessionId,

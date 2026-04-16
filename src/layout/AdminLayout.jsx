@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -7,7 +7,8 @@ import NotificationBell from "../components/NotificationBell";
 export default function AdminLayout() {
   const { logout, user } = useAuth();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 901);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 901);
+  const isDesktop = window.innerWidth >= 901;
 
   const activePath = useMemo(() => {
     if (location.pathname === "/admin") return "/admin";
@@ -37,23 +38,32 @@ export default function AdminLayout() {
     logout();
   };
 
+  useEffect(() => {
+    const onResize = () => {
+      setSidebarOpen(window.innerWidth >= 901);
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   return (
     <div className="admin-shell">
-      {!sidebarOpen && (
+      {!sidebarOpen && !isDesktop && (
         <button className="admin-left-menu-fab" onClick={() => setSidebarOpen(true)}>
           ☰ Menu
         </button>
       )}
 
       {/* Sidebar overlay backdrop on mobile */}
-      {sidebarOpen && <div className="admin-sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && !isDesktop && <div className="admin-sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
       {/* Sidebar */}
       {sidebarOpen && (
-        <aside className="admin-aside">
+        <aside className={`admin-aside ${isDesktop ? "desktop-open" : "mobile-open"}`}>
           <div className="admin-aside-head">
             <h2>👨‍🍳 Admin Panel</h2>
-            <button onClick={() => setSidebarOpen(false)} className="admin-close-btn">&times;</button>
+            {!isDesktop && <button onClick={() => setSidebarOpen(false)} className="admin-close-btn">&times;</button>}
           </div>
           
           <nav style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
@@ -77,7 +87,7 @@ export default function AdminLayout() {
       <main className="admin-main-content">
         <div className="admin-topbar">
           <div className="admin-topbar-left">
-            <button className="admin-topbar-menu-btn" onClick={() => setSidebarOpen(true)}>☰ Menu</button>
+            {!isDesktop && <button className="admin-topbar-menu-btn" onClick={() => setSidebarOpen(true)}>☰ Menu</button>}
             <h3>Hotel Dine-In Admin</h3>
           </div>
           <div className="admin-profile-chip">

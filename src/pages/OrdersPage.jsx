@@ -18,6 +18,7 @@ export default function OrdersPage() {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [processingOnlinePayment, setProcessingOnlinePayment] = useState(false);
   const [verifyingOnlinePayment, setVerifyingOnlinePayment] = useState(false);
+  const [cancelingOrderId, setCancelingOrderId] = useState("");
   const onlineConfirmRef = useRef(false);
   const location = useLocation();
 
@@ -26,6 +27,12 @@ export default function OrdersPage() {
     api.get("/table/my-orders", tableHeaders(tableSession.token))
       .then(res => {
         setOrders(res.data);
+        return api.get("/table/session", tableHeaders(tableSession.token)).catch(() => null);
+      })
+      .then((sessionRes) => {
+        if (sessionRes?.data?.status && sessionRes.data.status !== tableSession.status) {
+          setTableSession({ ...tableSession, status: sessionRes.data.status });
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -131,17 +138,35 @@ export default function OrdersPage() {
     }
   };
 
+  const handleCancelRequest = async (orderId) => {
+    try {
+      setCancelingOrderId(orderId);
+      const res = await api.post(
+        `/table/orders/${orderId}/cancel-request`,
+        {},
+        tableHeaders(tableSession.token)
+      );
+      toast.success(res.data.message || "Cancellation request sent.");
+      fetchOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to send cancellation request.");
+    } finally {
+      setCancelingOrderId("");
+    }
+  };
+
   if (!tableSession) return null;
   if (verifyingOnlinePayment) return <div className="screen-loader">Verifying online payment...</div>;
   if (loading) return <div className="screen-loader">Loading orders...</div>;
 
-  const totalBill = orders.reduce((sum, o) => sum + o.total, 0);
+  const billableOrders = orders.filter((order) => order.status !== "Cancelled");
+  const totalBill = billableOrders.reduce((sum, o) => sum + o.total, 0);
 
   return (
     <div className="orders-page-container">
-      <div className="orders-header">
+      <div className="orders-header responsive-stack">
         <h2>Table {tableSession.tableNumber} - Kitchen Orders</h2>
-        <div style={{ background: tableSession.status === "open" ? "#dcfce7" : "#fef3c7", color: tableSession.status === "open" ? "#166534" : "#92400e", padding: "0.5rem 1rem", borderRadius: "20px", fontWeight: "600", fontSize: "0.9rem" }}>
+        <div className="order-status-banner" style={{ background: tableSession.status === "open" ? "#dcfce7" : "#fef3c7", color: tableSession.status === "open" ? "#166534" : "#92400e", padding: "0.5rem 1rem", borderRadius: "20px", fontWeight: "600", fontSize: "0.9rem" }}>
           Status: {tableSession.status.replace("_", " ").toUpperCase()}
         </div>
       </div>
@@ -151,31 +176,69 @@ export default function OrdersPage() {
       ) : (
         <div>
           {orders.map(order => (
-            <div key={order._id} style={{ border: "1px solid #e5e7eb", borderRadius: "8px", padding: "1.5rem", marginBottom: "1rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem", paddingBottom: "0.5rem", borderBottom: "1px solid #f3f4f6" }}>
+            <div key={order._id} className="order-card">
+              <div className="order-card-head">
                 <span style={{ fontWeight: "600", color: "var(--text-secondary)" }}>{new Date(order.createdAt).toLocaleTimeString()}</span>
-                <span style={{ fontWeight: "bold", color: order.status === "Pending" ? "#d97706" : "#059669" }}>{order.status}</span>
+                <span style={{ fontWeight: "bold", color: order.status === "Pending" ? "#d97706" : order.status === "Cancelled" ? "#b91c1c" : "#059669" }}>{order.status}</span>
               </div>
               <div>
                 {order.items.map((item, idx) => (
-                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", margin: "0.5rem 0" }}>
-                    <span>{item.quantity}x {item.foodId?.name || "Deleted Item"} {item.selectedOption ? `(${item.selectedOption})` : ""}</span>
+                  <div key={idx} className="order-line-row">
+                    <span>
+                      {item.quantity}x {item.foodId?.name || "Deleted Item"}
+                      {item.selectedVariant || item.selectedOption
+                        ? ` (${[item.selectedVariant, item.selectedOption].filter(Boolean).join(" • ")})`
+                        : ""}
+                    </span>
                   </div>
                 ))}
               </div>
+              {order.cancellationStatus === "requested" && (
+                <div className="order-info-banner warning">
+                  Cancellation request sent to staff. They will approve or reject it shortly.
+                </div>
+              )}
+              {order.cancellationStatus === "rejected" && order.status !== "Cancelled" && (
+                <div className="order-info-banner danger">
+                  Staff rejected the cancellation request because preparation is already underway.
+                </div>
+              )}
+              {order.status === "Cancelled" && (
+                <div className="order-info-banner neutral">
+                  This order has been cancelled and removed from the final bill.
+                </div>
+              )}
               <div style={{ textAlign: "right", marginTop: "1rem", fontWeight: "bold" }}>
                 Subtotal: ₹{order.total}
               </div>
+              {order.status !== "Served" && order.status !== "Cancelled" && tableSession.status !== "closed" && (
+                <div className="order-card-actions">
+                  <button
+                    type="button"
+                    className="secondary-btn order-cancel-btn"
+                    disabled={cancelingOrderId === order._id || order.cancellationStatus === "requested"}
+                    onClick={() => handleCancelRequest(order._id)}
+                  >
+                    {order.cancellationStatus === "requested"
+                      ? "Cancellation Requested"
+                      : cancelingOrderId === order._id
+                        ? "Sending..."
+                        : order.status === "Preparing"
+                          ? "Request Cancel from Staff"
+                          : "Cancel This Order"}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
 
-          <div style={{ marginTop: "2rem", paddingTop: "1.5rem", borderTop: "2px solid #e5e7eb", textAlign: "right" }}>
+          <div className="orders-total-bar">
             <h3>Final Total: <span style={{ color: "var(--primary-color)", fontSize: "1.5rem" }}>₹{totalBill}</span></h3>
           </div>
         </div>
       )}
 
-      {orders.length > 0 && tableSession.status === "open" && (
+      {billableOrders.length > 0 && tableSession.status === "open" && (
         <button 
           onClick={() => setShowBillConfirmModal(true)}
           style={{ width: "100%", marginTop: "2rem", padding: "1rem", background: "var(--primary-color)", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", fontSize: "1.1rem", cursor: "pointer", transition: "0.3s" }}
@@ -184,7 +247,7 @@ export default function OrdersPage() {
         </button>
       )}
 
-      {tableSession.status === "awaiting_payment" && (
+      {tableSession.status === "awaiting_payment" && billableOrders.length > 0 && (
         <div style={{ marginTop: "2rem", background: "#f8fafc", padding: "1.5rem", borderRadius: "8px", textAlign: "center", border: "1px solid #e2e8f0" }}>
           <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>💵</div>
           <h3 style={{ margin: "0 0 1rem 0", color: "#334155" }}>Awaiting Payment</h3>
@@ -195,6 +258,12 @@ export default function OrdersPage() {
           >
             Leave Feedback & Checkout
           </button>
+        </div>
+      )}
+
+      {billableOrders.length === 0 && orders.length > 0 && (
+        <div className="order-info-banner neutral">
+          No billable orders are left for this table right now. You can place a fresh order from the menu.
         </div>
       )}
 

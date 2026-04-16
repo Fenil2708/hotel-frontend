@@ -19,6 +19,7 @@ export default function MenuPage() {
   const [optionModalOpen, setOptionModalOpen] = useState(false);
   const [currentFood, setCurrentFood] = useState(null);
   const [selectedOption, setSelectedOption] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState("");
 
   useEffect(() => {
     if (!optionModalOpen) return undefined;
@@ -47,12 +48,14 @@ export default function MenuPage() {
   }, [tableSession, navigate]);
 
   const handleAddToCartClick = (food) => {
-    if (food.options && food.options.length > 0) {
+    const defaultVariant = food.variants?.find((variant) => variant.isDefault) || food.variants?.[0];
+    if ((food.options && food.options.length > 0) || (food.variants && food.variants.length > 0)) {
       setCurrentFood(food);
-      setSelectedOption(food.options[0]); // default first
+      setSelectedOption(food.options?.[0] || "");
+      setSelectedVariant(defaultVariant?.name || "");
       setOptionModalOpen(true);
     } else {
-      addToCart(food, "");
+      addToCart(food, { selectedOption: "", selectedVariant: "", unitPrice: food.price });
       toast.success(`Added ${food.name} to cart!`);
       if (isLoggedIn) {
         api.post("/notifications", { title: "Cart Updated", message: `Added ${food.name} to cart.`, type: "cart" }, authHeaders(token)).catch(() => {});
@@ -62,10 +65,16 @@ export default function MenuPage() {
 
   const confirmAddWithOption = () => {
     if (currentFood) {
-      addToCart(currentFood, selectedOption);
-      toast.success(`Added ${currentFood.name} (${selectedOption}) to cart!`);
+      const activeVariant = currentFood.variants?.find((variant) => variant.name === selectedVariant);
+      addToCart(currentFood, {
+        selectedOption,
+        selectedVariant,
+        unitPrice: activeVariant?.price ?? currentFood.price,
+      });
+      const selectionText = [selectedVariant, selectedOption].filter(Boolean).join(" • ");
+      toast.success(`Added ${currentFood.name}${selectionText ? ` (${selectionText})` : ""} to cart!`);
       if (isLoggedIn) {
-        api.post("/notifications", { title: "Cart Updated", message: `Added ${currentFood.name} (${selectedOption}) to cart.`, type: "cart" }, authHeaders(token)).catch(() => {});
+        api.post("/notifications", { title: "Cart Updated", message: `Added ${currentFood.name}${selectionText ? ` (${selectionText})` : ""} to cart.`, type: "cart" }, authHeaders(token)).catch(() => {});
       }
       setOptionModalOpen(false);
       setCurrentFood(null);
@@ -85,57 +94,64 @@ export default function MenuPage() {
   return (
     <>
     <div className="menu-page">
-      <div className="menu-page-head">
-        <h1>Hotel Menu <span>Table {tableSession?.tableNumber}</span></h1>
+      <div className="menu-hero">
+        <div className="menu-hero-copy">
+          <p className="eyebrow">Curated Dining</p>
+          <h1>Hotel Menu <span>Table {tableSession?.tableNumber}</span></h1>
+          <p className="menu-hero-subtext">Chef-crafted dishes, elegant service, and a calmer ordering experience at your table.</p>
+        </div>
+        <div className="menu-hero-badge">
+          <strong>{filteredFoods.length}</strong>
+          <span>plates ready to order</span>
+        </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="search-wrap">
-        <span className="search-icon">🔍</span>
-        <input
-          type="text"
-          placeholder="Search dishes by name or description..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          className="menu-search-input"
-          onFocus={e => e.target.style.borderColor = "var(--primary-color)"}
-          onBlur={e => e.target.style.borderColor = "#e5e7eb"}
-        />
-        {searchQuery && (
-          <button onClick={() => setSearchQuery("")} className="search-clear-btn">✕</button>
-        )}
-      </div>
+      <div className="menu-toolbar-card">
+        <div className="search-wrap">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Search dishes by name or description..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="menu-search-input"
+            onFocus={e => e.target.style.borderColor = "var(--primary-color)"}
+            onBlur={e => e.target.style.borderColor = "#e5e7eb"}
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="search-clear-btn">✕</button>
+          )}
+        </div>
 
-      {/* Category Tabs */}
-      <div className="category-scroll">
-        <button
-          onClick={() => setSelectedCat("All")}
-          style={{ 
-            padding: "0.5rem 1.5rem", borderRadius: "20px", border: "none", fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap",
-            background: selectedCat === "All" ? "var(--primary-color)" : "#e5e7eb",
-            color: selectedCat === "All" ? "white" : "black"
-          }}
-        >
-          All
-        </button>
-        {categories.map(c => (
+        <div className="category-scroll">
           <button
-            key={c._id}
-            onClick={() => setSelectedCat(c.name)}
+            onClick={() => setSelectedCat("All")}
             style={{ 
               padding: "0.5rem 1.5rem", borderRadius: "20px", border: "none", fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap",
-              background: selectedCat === c.name ? "var(--primary-color)" : "#e5e7eb",
-              color: selectedCat === c.name ? "white" : "black"
+              background: selectedCat === "All" ? "var(--primary-color)" : "#e5e7eb",
+              color: selectedCat === "All" ? "white" : "black"
             }}
           >
-            {c.name}
+            All
           </button>
-        ))}
+          {categories.map(c => (
+            <button
+              key={c._id}
+              onClick={() => setSelectedCat(c.name)}
+              style={{ 
+                padding: "0.5rem 1.5rem", borderRadius: "20px", border: "none", fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap",
+                background: selectedCat === c.name ? "var(--primary-color)" : "#e5e7eb",
+                color: selectedCat === c.name ? "white" : "black"
+              }}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
       </div>
       
-      {/* Results count */}
       {searchQuery && (
-        <div style={{ marginBottom: "1rem", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+        <div className="menu-result-meta">
           {filteredFoods.length === 0 ? `No results for "${searchQuery}"` : `${filteredFoods.length} result${filteredFoods.length !== 1 ? "s" : ""} for "${searchQuery}"`}
         </div>
       )}
@@ -147,11 +163,20 @@ export default function MenuPage() {
             <div className="food-card-body">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
                 <h3 style={{ margin: 0, fontSize: "1rem", flex: 1 }}>{food.name}</h3>
-                <span style={{ fontWeight: "700", color: "var(--primary-color)", marginLeft: "0.5rem", whiteSpace: "nowrap" }}>₹{food.price}</span>
+                <span style={{ fontWeight: "700", color: "var(--primary-color)", marginLeft: "0.5rem", whiteSpace: "nowrap" }}>
+                  ₹{food.variants?.length ? Math.min(...food.variants.map((variant) => variant.price)) : food.price}
+                </span>
               </div>
+              {food.variants?.length > 0 && (
+                <div className="food-variant-preview">
+                  {food.variants.map((variant) => (
+                    <span key={variant.name} className="variant-chip">{variant.name} • ₹{variant.price}</span>
+                  ))}
+                </div>
+              )}
               <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: "1rem", flex: 1, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>{food.description}</p>
               <button onClick={() => handleAddToCartClick(food)} className="food-add-btn">
-                {food.options?.length > 0 ? "Add (Select Option)" : "Add to Cart"}
+                {food.options?.length > 0 || food.variants?.length > 0 ? "Customize & Add" : "Add to Cart"}
               </button>
             </div>
           </div>
@@ -164,6 +189,22 @@ export default function MenuPage() {
         <div className="modal-card option-modal-card" onClick={(e) => e.stopPropagation()}>
           <h3 className="option-modal-title">Choose your preference</h3>
           <p className="option-modal-subtitle">{currentFood.name}</p>
+          {currentFood.variants?.length > 0 && (
+            <>
+              <p className="option-modal-subtitle">Select portion / style</p>
+              <div className="option-list">
+                {currentFood.variants.map((variant) => (
+                  <label key={variant.name} className={`option-item ${selectedVariant === variant.name ? "active" : ""}`}>
+                    <input type="radio" name="foodVariant" value={variant.name} checked={selectedVariant === variant.name} onChange={() => setSelectedVariant(variant.name)} />
+                    <span className="option-text">{variant.name}</span>
+                    <strong>₹{variant.price}</strong>
+                  </label>
+                ))}
+              </div>
+            </>
+          )}
+          {currentFood.options?.length > 0 && (
+            <>
           <div className="option-list">
             {currentFood.options.map(opt => (
               <label key={opt} className={`option-item ${selectedOption === opt ? "active" : ""}`}>
@@ -172,6 +213,8 @@ export default function MenuPage() {
               </label>
             ))}
           </div>
+            </>
+          )}
           <div className="option-actions">
             <button onClick={() => setOptionModalOpen(false)} className="option-cancel-btn">Cancel</button>
             <button onClick={confirmAddWithOption} className="option-confirm-btn">Add to Cart</button>

@@ -37,6 +37,7 @@ export default function AdminRegisterPage() {
     <div className="auth-shell">
       <div className="auth-backdrop" />
       <div className="auth-card glass-effect">
+        <p className="eyebrow auth-eyebrow">Operations Access</p>
         <h2 className="auth-title">Admin Register</h2>
         {error && <div className="error">{error}</div>}
         

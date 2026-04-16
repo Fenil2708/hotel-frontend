@@ -8,6 +8,7 @@ export default function AdminTablesPage() {
   const [tables, setTables] = useState([]);
   const [form, setForm] = useState({ tableNumber: "", capacity: "" });
   const [loading, setLoading] = useState(true);
+  const [highlightedTableId, setHighlightedTableId] = useState("");
 
   const fetchTables = async () => {
     try {
@@ -54,9 +55,24 @@ export default function AdminTablesPage() {
     fetchTables();
   };
 
+  const handleRotateCode = async (id) => {
+    const res = await api.put(`/table-catalog/${id}`, { rotateAccessCode: true }, authHeaders(token));
+    setHighlightedTableId(id);
+    toast.success(`Table ${res.data.tableNumber} new code: ${res.data.accessCode}`);
+    fetchTables();
+  };
+
   return (
-    <div className="page">
-      <div className="panel">
+    <div className="admin-page-shell">
+      <div className="admin-section-head">
+        <div>
+          <p className="eyebrow">Floor Control</p>
+          <h1>Tables Management</h1>
+          <p className="hint-text">Manage physical tables, guest capacity, and secure access codes used by diners.</p>
+        </div>
+      </div>
+
+      <div className="panel admin-surface">
         <h2>Tables Management</h2>
         <form className="auth-form" onSubmit={handleAdd}>
           <input placeholder="Table Number" type="number" min="1" value={form.tableNumber} onChange={(e) => setForm({ ...form, tableNumber: e.target.value })} required />
@@ -66,15 +82,16 @@ export default function AdminTablesPage() {
         <button className="secondary-btn" onClick={handleSeedDefaults}>Seed 8 Default Tables</button>
       </div>
 
-      <div className="panel">
+      <div className="panel admin-surface">
         <h3>Configured Tables</h3>
         {loading ? <p>Loading...</p> : (
           <div className="admin-list">
             {tables.map((t) => (
-              <div key={t._id} className="admin-row">
+              <div key={t._id} className={`admin-row ${highlightedTableId === t._id ? "table-code-highlight" : ""}`}>
                 <div>
                   <strong>Table {t.tableNumber}</strong>
                   <p>{t.isActive ? "Available for assignment" : "Inactive"}</p>
+                  <p style={{ margin: "0.35rem 0 0", fontSize: "0.9rem" }}>Access code: <strong>{t.accessCode}</strong></p>
                 </div>
                 <div className="row-actions">
                   <input
@@ -85,6 +102,7 @@ export default function AdminTablesPage() {
                     onBlur={(e) => handleCapacity(t._id, e.target.value)}
                     style={{ width: 80 }}
                   />
+                  <button className="small-btn" onClick={() => handleRotateCode(t._id)}>Rotate Code</button>
                   <button className="small-btn" onClick={() => handleToggle(t._id, t.isActive)}>{t.isActive ? "Disable" : "Enable"}</button>
                 </div>
               </div>

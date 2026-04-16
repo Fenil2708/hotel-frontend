@@ -5,40 +5,58 @@ const CartContext = createContext();
 export function CartProvider({ children }) {
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem("tableCart");
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    try {
+      return JSON.parse(saved).map((item) => ({
+        ...item,
+        selectedVariant: item.selectedVariant || "",
+        unitPrice: Number(item.unitPrice ?? item.price ?? 0),
+        cartKey: item.cartKey || `${item._id}::${item.selectedVariant || ""}::${item.selectedOption || ""}`,
+      }));
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {
     localStorage.setItem("tableCart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (food, selectedOption = "") => {
+  const buildCartKey = (foodId, selectedVariant = "", selectedOption = "") => `${foodId}::${selectedVariant}::${selectedOption}`;
+
+  const addToCart = (food, selection = {}) => {
+    const selectedOption = selection.selectedOption || "";
+    const selectedVariant = selection.selectedVariant || "";
+    const unitPrice = Number(selection.unitPrice ?? food.price ?? 0);
+    const cartKey = buildCartKey(food._id, selectedVariant, selectedOption);
+
     setCart((prev) => { 
-      // Find if same food AND same option exists
-      const existing = prev.find((item) => item._id === food._id && item.selectedOption === selectedOption);
+      const existing = prev.find((item) => item.cartKey === cartKey);
       if (existing) {
         return prev.map((item) =>
-          item._id === food._id && item.selectedOption === selectedOption
+          item.cartKey === cartKey
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prev, { ...food, quantity: 1, selectedOption }];
+      return [...prev, { ...food, quantity: 1, selectedOption, selectedVariant, price: unitPrice, unitPrice, cartKey }];
     });
   };
 
-  const removeFromCart = (foodId, selectedOption = "") => {
-    setCart((prev) => prev.filter((item) => !(item._id === foodId && item.selectedOption === selectedOption)));
+  const removeFromCart = (foodId, selectedVariant = "", selectedOption = "") => {
+    const cartKey = buildCartKey(foodId, selectedVariant, selectedOption);
+    setCart((prev) => prev.filter((item) => item.cartKey !== cartKey));
   };
 
-  const updateQuantity = (foodId, selectedOption, quantity) => {
+  const updateQuantity = (foodId, selectedVariant, selectedOption, quantity) => {
     if (quantity <= 0) {
-      removeFromCart(foodId, selectedOption);
+      removeFromCart(foodId, selectedVariant, selectedOption);
       return;
     }
+    const cartKey = buildCartKey(foodId, selectedVariant, selectedOption);
     setCart((prev) =>
       prev.map((item) =>
-        item._id === foodId && item.selectedOption === selectedOption
+        item.cartKey === cartKey
           ? { ...item, quantity }
           : item
       )

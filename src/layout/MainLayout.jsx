@@ -75,7 +75,17 @@ export default function MainLayout() {
       </header>
 
       <Outlet />
+
+      {tableSession && (
+        <nav className="mobile-bottom-nav" aria-label="Customer navigation">
+          <Link to="/menu" className={navLinkClass("/menu")}>Menu</Link>
+          <Link to="/cart" className={navLinkClass("/cart")}>
+            Cart {cart.length > 0 && <span className="cart-count">{cart.length}</span>}
+          </Link>
+          <Link to="/orders" className={navLinkClass("/orders")}>Orders</Link>
+          <Link to="/profile" className={navLinkClass("/profile")}>Profile</Link>
+        </nav>
+      )}
     </main>
   );
 }
-

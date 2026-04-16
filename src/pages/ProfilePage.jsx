@@ -81,14 +81,16 @@ export default function ProfilePage() {
           <div className="profile-avatar-lg">{(user?.name || "U")[0]}</div>
         )}
         <div>
+          <p className="eyebrow">Guest Profile</p>
           <h2>{user?.name || "Customer Profile"}</h2>
           <p>{user?.email}</p>
         </div>
       </div>
 
       <div className="profile-grid">
-        <div className="panel">
+        <div className="panel profile-panel">
           <h3>Profile Information</h3>
+          <p className="hint-text">Keep your dining identity polished for quicker ordering and a smoother table experience.</p>
           {formError && <p className="error">{formError}</p>}
           <form className="auth-form" onSubmit={handleUpdateProfile}>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" required />
@@ -100,8 +102,9 @@ export default function ProfilePage() {
           </form>
         </div>
 
-        <div className="panel">
+        <div className="panel profile-panel">
           <h4>Change Password</h4>
+          <p className="hint-text">Protect your account with a stronger password and keep your profile secure.</p>
           {passError && <p className="error">{passError}</p>}
           <form className="auth-form" onSubmit={handleChangePassword}>
             <div className="password-wrap">

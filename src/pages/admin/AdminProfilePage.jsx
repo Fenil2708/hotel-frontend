@@ -75,10 +75,16 @@ export default function AdminProfilePage() {
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
-      <h1>Admin Profile Settings</h1>
+    <div className="admin-page-shell admin-profile-shell">
+      <div className="admin-section-head">
+        <div>
+          <p className="eyebrow">Leadership Identity</p>
+          <h1>Admin Profile Settings</h1>
+          <p className="hint-text">Fine-tune your team identity, admin image, and password security from one place.</p>
+        </div>
+      </div>
 
-      <div style={{ background: "white", padding: "2rem", borderRadius: "12px", boxShadow: "var(--shadow-sm)", marginBottom: "2rem" }}>
+      <div className="panel admin-surface" style={{ marginBottom: "2rem" }}>
         <h2>Update Information</h2>
         <form onSubmit={handleUpdateProfile} style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1rem" }}>
           
@@ -113,7 +119,7 @@ export default function AdminProfilePage() {
         </form>
       </div>
 
-      <div style={{ background: "white", padding: "2rem", borderRadius: "12px", boxShadow: "var(--shadow-sm)" }}>
+      <div className="panel admin-surface">
         <h2>Change Password</h2>
         <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1rem" }}>
           <label style={{ fontWeight: "bold" }}>Current Password</label>

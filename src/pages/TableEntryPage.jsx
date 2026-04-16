@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 
 export default function TableEntryPage() {
   const [tableNumber, setTableNumber] = useState("");
+  const [accessCode, setAccessCode] = useState("");
   const [guests, setGuests] = useState(2);
   const [tables, setTables] = useState([]);
   const [loadingTables, setLoadingTables] = useState(false);
@@ -23,6 +24,7 @@ export default function TableEntryPage() {
     try {
       const res = await api.post("/table/start", { 
         tableNumber: Number(tableNumber),
+        accessCode: accessCode.trim().toUpperCase(),
         guests: Number(guests),
         customerId: auth?.user?.id || auth?.user?._id
       });
@@ -112,6 +114,17 @@ export default function TableEntryPage() {
               </option>
             ))}
           </select>
+        </div>
+        <div className="table-input-wrap">
+          <label>Table Access Code</label>
+          <input
+            type="text"
+            value={accessCode}
+            onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+            placeholder="Enter code printed on your table"
+            maxLength={6}
+            required
+          />
         </div>
         <button type="submit" disabled={loading} className="table-start-btn">
           {loading ? "Starting..." : "Start Dining"}

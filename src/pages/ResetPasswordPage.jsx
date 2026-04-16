@@ -46,6 +46,7 @@ export default function ResetPasswordPage() {
     <div className="auth-shell">
       <div className="auth-backdrop" />
       <div className="auth-card glass-effect">
+        <p className="eyebrow auth-eyebrow">Secure Reset</p>
         <h2 className="auth-title">Reset Password</h2>
         <p className="auth-subtitle">for {email}</p>
         <form className="auth-form-modern" onSubmit={handleSubmit}>

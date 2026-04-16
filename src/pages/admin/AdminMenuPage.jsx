@@ -8,8 +8,10 @@ export default function AdminMenuPage() {
   const { token } = useAuth();
   const [tab, setTab] = useState("foods");
 
-  const [form, setForm] = useState({ name: "", category: "", price: "", description: "", image: "", options: [] });
+  const [form, setForm] = useState({ name: "", category: "", price: "", description: "", image: "", options: [], variants: [] });
   const [optionInput, setOptionInput] = useState("");
+  const [variantName, setVariantName] = useState("");
+  const [variantPrice, setVariantPrice] = useState("");
   const [catName, setCatName] = useState("");
   const [editingCategoryId, setEditingCategoryId] = useState(null);
   const [deletingCategoryId, setDeletingCategoryId] = useState("");
@@ -80,7 +82,7 @@ export default function AdminMenuPage() {
     setFormError("");
     if (!form.category) { setFormError("Select a category first."); return; }
     if (form.name.trim().length < 2) { setFormError("Item name must be at least 2 characters."); return; }
-    if (Number(form.price) <= 0) { setFormError("Price should be greater than 0."); return; }
+    if (!form.variants.length && Number(form.price) <= 0) { setFormError("Price should be greater than 0."); return; }
     if (form.description.trim().length < 8) { setFormError("Description must be at least 8 characters."); return; }
     setUploading(true);
     let imageUrl = form.image;
@@ -96,15 +98,17 @@ export default function AdminMenuPage() {
     const payload = { 
         ...form, 
         image: imageUrl, 
-        price: Number(form.price),
+        price: Number(form.price || 0),
         options: form.options
     };
     
     try {
       await api.post("/foods", payload, authHeaders(token));
       toast.success(`"${form.name}" added to menu!`);
-      setForm({ name: "", category: "", price: "", description: "", image: "", options: [] });
+      setForm({ name: "", category: "", price: "", description: "", image: "", options: [], variants: [] });
       setImageFile(null);
+      setVariantName("");
+      setVariantPrice("");
       fetchData();
     } catch {
       toast.error("Error saving food item");
@@ -113,16 +117,68 @@ export default function AdminMenuPage() {
     }
   };
 
+  const addVariant = (name, price) => {
+    const cleanName = String(name || "").trim();
+    const cleanPrice = Number(price);
+    if (!cleanName || !Number.isFinite(cleanPrice) || cleanPrice < 0) {
+      toast.error("Enter valid variant name and price.");
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      variants: [...prev.variants, { name: cleanName, price: cleanPrice, isDefault: prev.variants.length === 0 }],
+      price: prev.variants.length === 0 ? String(cleanPrice) : prev.price,
+    }));
+    setVariantName("");
+    setVariantPrice("");
+  };
+
+  const removeVariant = (index) => {
+    setForm((prev) => {
+      const nextVariants = prev.variants.filter((_, idx) => idx !== index).map((variant, idx) => ({
+        ...variant,
+        isDefault: idx === 0,
+      }));
+      return {
+        ...prev,
+        variants: nextVariants,
+        price: nextVariants[0] ? String(nextVariants[0].price) : prev.price,
+      };
+    });
+  };
+
+  const fillClassicPortionPreset = () => {
+    setForm((prev) => ({
+      ...prev,
+      variants: [
+        { name: "Half Regular", price: 30, isDefault: true },
+        { name: "Half Jain", price: 30, isDefault: false },
+        { name: "Full Regular", price: 60, isDefault: false },
+        { name: "Full Jain", price: 60, isDefault: false },
+      ],
+      price: "30",
+    }));
+    toast.success("Added Half/Full + Jain/Regular preset.");
+  };
+
   return (
-    <div className="page">
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
-        <button onClick={() => setTab("foods")} style={{ padding: "0.75rem 1.5rem", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer", background: tab === "foods" ? "var(--primary-color)" : "#e5e7eb", color: tab === "foods" ? "white" : "black" }}>Manage Menu Items</button>
-        <button onClick={() => setTab("categories")} style={{ padding: "0.75rem 1.5rem", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer", background: tab === "categories" ? "var(--primary-color)" : "#e5e7eb", color: tab === "categories" ? "white" : "black" }}>Manage Categories</button>
+    <div className="admin-page-shell">
+      <div className="admin-section-head">
+        <div>
+          <p className="eyebrow">Creative Kitchen</p>
+          <h1>Menu Studio</h1>
+          <p className="hint-text">Build your food catalog, organize categories, and keep presentation worthy of your brand.</p>
+        </div>
+      </div>
+
+      <div className="segmented-tabs">
+        <button className={`segment-tab ${tab === "foods" ? "active" : ""}`} onClick={() => setTab("foods")}>Manage Menu Items</button>
+        <button className={`segment-tab ${tab === "categories" ? "active" : ""}`} onClick={() => setTab("categories")}>Manage Categories</button>
       </div>
 
       {tab === "categories" && (
         <div className="admin-category-grid">
-          <div style={{ background: "white", padding: "2rem", borderRadius: "12px", boxShadow: "var(--shadow-sm)" }}>
+          <div className="panel admin-surface">
             <h2>{editingCategoryId ? "Edit Category" : "Add New Category"}</h2>
             <form onSubmit={handleAddCategory} style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
                 <input placeholder="e.g. Gujarati Dishes" value={catName} onChange={e => setCatName(e.target.value)} required style={{ flex: 1, padding: "0.75rem", borderRadius: "8px", border: "1px solid #ccc" }} />
@@ -135,7 +191,7 @@ export default function AdminMenuPage() {
             <h2>Existing Categories</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 {categories.map(c => (
-                    <div key={c._id} style={{ display: "flex", justifyContent: "space-between", background: "white", padding: "1rem", borderRadius: "8px", boxShadow: "var(--shadow-sm)" }}>
+                    <div key={c._id} className="admin-list-tile">
                         <span style={{ fontWeight: "bold" }}>{c.name}</span>
                         <div style={{ display: "flex", gap: "0.4rem" }}>
                           <button onClick={() => { setEditingCategoryId(c._id); setCatName(c.name); }} style={{ padding: "0.25rem 0.5rem", background: "#2563eb", color: "white", border: "none", borderRadius: "4px", fontSize: "0.8rem", cursor: "pointer" }}>Edit</button>
@@ -150,7 +206,7 @@ export default function AdminMenuPage() {
 
       {tab === "foods" && (
         <div>
-          <div style={{ background: "white", padding: "2rem", borderRadius: "12px", boxShadow: "var(--shadow-sm)", alignSelf: "start" }}>
+          <div className="panel admin-surface" style={{ alignSelf: "start" }}>
             <h2>Add Menu Item</h2>
             {formError && <p className="error">{formError}</p>}
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1rem" }}>
@@ -164,6 +220,42 @@ export default function AdminMenuPage() {
               </select>
 
               <input type="number" placeholder="Price (₹)" value={form.price} onChange={e => setForm({...form, price: e.target.value})} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #ccc" }} />
+
+              <div className="variant-builder">
+                <div className="variant-builder-head">
+                  <div>
+                    <label className="menu-mgmt-label">Priced Variants</label>
+                    <p className="hint-text">Use this for Half/Full, Jain/Regular, Kids/Family, or any size-style combination with different prices.</p>
+                  </div>
+                  <button type="button" className="small-btn" onClick={fillClassicPortionPreset}>Add Classic Portion Preset</button>
+                </div>
+                <div className="variant-builder-grid">
+                  <input
+                    type="text"
+                    placeholder="Variant name e.g. Half Jain"
+                    value={variantName}
+                    onChange={(e) => setVariantName(e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Price"
+                    value={variantPrice}
+                    onChange={(e) => setVariantPrice(e.target.value)}
+                  />
+                  <button type="button" className="small-btn" onClick={() => addVariant(variantName, variantPrice)}>Add Variant</button>
+                </div>
+                {form.variants.length > 0 && (
+                  <div className="variant-chip-grid">
+                    {form.variants.map((variant, index) => (
+                      <div key={`${variant.name}-${index}`} className="variant-admin-chip">
+                        <span>{variant.name}</span>
+                        <strong>₹{variant.price}</strong>
+                        <button type="button" onClick={() => removeVariant(index)}>&times;</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               
               <div style={{ border: "1px solid #ccc", padding: "0.75rem", borderRadius: "8px", background: "#f9fafb" }}>
                 <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", fontSize: "0.9rem" }}>Variations / Options (e.g., Butter, Oil)</label>
@@ -226,4 +318,3 @@ export default function AdminMenuPage() {
     </div>
   );
 }
-

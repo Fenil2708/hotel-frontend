@@ -112,7 +112,8 @@ export default function AuthPage() {
     <div className="auth-shell">
       <div className="auth-backdrop" />
       <div className="auth-card glass-effect animate-fade-in">
-        <div className="auth-icon">✨</div>
+        <div className="auth-icon">✦</div>
+        <p className="eyebrow auth-eyebrow">Fine Dining Access</p>
         <h1 className="auth-title">
           {isLogin ? "Welcome Guest" : "Join The Feast"}
         </h1>
@@ -121,7 +122,7 @@ export default function AuthPage() {
         </p>
 
         <div className="auth-stack">
-          {inlineError && <p className="error">{inlineError}</p>}
+          {inlineError && <p className="error auth-error">{inlineError}</p>}
           {isLogin ? (
             <form onSubmit={handleLogin} className="auth-form-modern">
               <input type="email" placeholder="Email Address" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required />
@@ -174,4 +175,3 @@ export default function AuthPage() {
     </div>
   );
 }
-

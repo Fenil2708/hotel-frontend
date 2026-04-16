@@ -34,6 +34,7 @@ export default function AdminLoginPage() {
     <div className="auth-shell">
       <div className="auth-backdrop" />
       <div className="auth-card glass-effect">
+        <p className="eyebrow auth-eyebrow">Operations Access</p>
         <h2 className="auth-title">Admin Login</h2>
         {error && <p className="error">{error}</p>}
         <form onSubmit={handleLogin} className="auth-form-modern">

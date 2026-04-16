@@ -28,9 +28,15 @@ export default function AdminProfitPage() {
   }, []);
 
   return (
-    <div>
-      <h1>Profit Analytics</h1>
-      <div style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+    <div className="admin-page-shell">
+      <div className="admin-section-head">
+        <div>
+          <p className="eyebrow">Finance Overview</p>
+          <h1>Profit Analytics</h1>
+          <p className="hint-text">Track revenue quality, payment mix, and bill activity across your chosen range.</p>
+        </div>
+      </div>
+      <div className="admin-filter-bar">
         <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         <button className="small-btn" onClick={fetchProfit}>Apply</button>
@@ -44,7 +50,7 @@ export default function AdminProfitPage() {
             <div className="stat-card"><p>Online Revenue</p><strong>Rs. {data.summary.onlineRevenue || 0}</strong></div>
             <div className="stat-card"><p>Total Bills</p><strong>{data.summary.bills || 0}</strong></div>
           </div>
-          <div className="panel">
+          <div className="panel admin-surface">
             <h3>Date-wise Income</h3>
             <div className="responsive-table">
               <table>

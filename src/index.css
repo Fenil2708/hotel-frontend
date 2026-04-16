@@ -1,27 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
 
 :root {
-  --primary: #ff7a00;
-  --primary-color: #ff7a00;
-  --primary-dark: #e66e00;
-  --primary-soft: rgba(255, 122, 0, 0.1);
-  --secondary: #1a1b1e;
-  --accent: #10b981;
-  --bg-main: #fcf8f5;
+  --primary: #c96a2b;
+  --primary-color: #c96a2b;
+  --primary-dark: #8d4519;
+  --primary-soft: rgba(201, 106, 43, 0.12);
+  --secondary: #201912;
+  --accent: #2d8f6f;
+  --bg-main: #f7f0e7;
   --bg-card: #ffffff;
-  --text-main: #1a1b1e;
-  --text-muted: #6b7280;
-  --text-secondary: #6b7280;
-  --border-color: rgba(0, 0, 0, 0.08);
+  --text-main: #1f1a17;
+  --text-muted: #7b6f63;
+  --text-secondary: #7b6f63;
+  --border-color: rgba(69, 43, 27, 0.12);
+  --surface-strong: #fffaf5;
+  --surface-tint: #f1e2d3;
   
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
   --radius-xl: 32px;
   
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.02);
-  --shadow-md: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
-  --shadow-lg: 0 20px 50px -12px rgba(0,0,0,0.1);
+  --shadow-sm: 0 8px 18px rgba(52, 33, 20, 0.05);
+  --shadow-md: 0 18px 40px rgba(52, 33, 20, 0.08);
+  --shadow-lg: 0 28px 70px rgba(52, 33, 20, 0.12);
   
   --glass: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(255, 255, 255, 0.3);
@@ -35,11 +37,15 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Manrope', sans-serif;
   background-color: var(--bg-main);
   color: var(--text-main);
   line-height: 1.6;
   overflow-x: hidden;
+  background-image:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 28%),
+    radial-gradient(circle at 85% 12%, rgba(223, 187, 154, 0.38), transparent 24%),
+    linear-gradient(180deg, #f9f4ed 0%, #f7f0e7 100%);
 }
 
 #root {
@@ -55,9 +61,9 @@ svg {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
 }
 
 /* --- Premium Buttons --- */
@@ -110,6 +116,26 @@ h1, h2, h3, h4, h5, h6 {
 .premium-card:hover {
   transform: translateY(-8px);
   box-shadow: var(--shadow-lg);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.55;
 }
 
 /* --- Food Grid --- */
@@ -201,4 +227,3 @@ input:focus {
     gap: 16px;
   }
 }
-

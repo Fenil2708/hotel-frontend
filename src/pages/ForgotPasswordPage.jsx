@@ -53,7 +53,9 @@ export default function ForgotPasswordPage() {
     <div className="auth-shell">
       <div className="auth-backdrop" />
       <div className="auth-card glass-effect">
+        <p className="eyebrow auth-eyebrow">Account Recovery</p>
         <h2 className="auth-title">Forgot Password</h2>
+        <p className="auth-subtitle">We will send a secure verification code so you can restore access smoothly.</p>
         {step === 1 ? (
           <div className="auth-form-modern">
             <input type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} />

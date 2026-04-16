@@ -53,9 +53,13 @@ export default function AdminUsersPage() {
     : users;
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
-        <h1 style={{ margin: 0 }}>Customer Users Directory</h1>
+    <div className="admin-page-shell">
+      <div className="admin-section-head responsive-stack">
+        <div>
+          <p className="eyebrow">Guest Relationships</p>
+          <h1 style={{ margin: 0 }}>Customer Users Directory</h1>
+          <p className="hint-text">Review customer details, revisit dining history, and identify your most loyal guests.</p>
+        </div>
         <div style={{ position: "relative", width: "280px" }}>
           <span style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }}>🔍</span>
           <input
@@ -73,7 +77,7 @@ export default function AdminUsersPage() {
         </div>
       </div>
       
-      <div style={{ background: "white", padding: "1rem", borderRadius: "12px", boxShadow: "var(--shadow-sm)" }}>
+      <div className="panel admin-surface">
         <div className="responsive-table">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
@@ -149,7 +153,7 @@ export default function AdminUsersPage() {
                       <div>
                         {bill.items.map((item, idx) => (
                           <div key={idx} style={{ display: "flex", justifyContent: "space-between", margin: "0.25rem 0", fontSize: "0.9rem" }}>
-                            <span>{item.quantity}x {item.name} {item.selectedOption ? `(${item.selectedOption})` : ""}</span>
+                            <span>{item.quantity}x {item.name} {[item.selectedVariant, item.selectedOption].filter(Boolean).length ? `(${[item.selectedVariant, item.selectedOption].filter(Boolean).join(" • ")})` : ""}</span>
                             <span>₹{item.lineTotal}</span>
                           </div>
                         ))}

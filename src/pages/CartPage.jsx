@@ -18,7 +18,13 @@ export default function CartPage() {
     if (cart.length === 0) return;
     try {
       await api.post("/table/order", {
-        items: cart.map(item => ({ foodId: item._id, quantity: item.quantity, selectedOption: item.selectedOption })),
+        items: cart.map(item => ({
+          foodId: item._id,
+          quantity: item.quantity,
+          selectedOption: item.selectedOption,
+          selectedVariant: item.selectedVariant,
+          unitPrice: item.unitPrice || item.price,
+        })),
         total: cartTotal
       }, tableHeaders(tableSession.token));
 
@@ -49,29 +55,32 @@ export default function CartPage() {
       
       <div style={{ marginTop: "2rem" }}>
         {cart.map((item, index) => (
-          <div key={`${item._id}-${index}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 0", borderBottom: "1px solid #f3f4f6" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-              <img src={item.image} alt={item.name} style={{ width: "60px", height: "60px", borderRadius: "8px", objectFit: "cover" }} />
+          <div key={`${item._id}-${index}`} className="cart-item-row">
+            <div className="cart-item-main">
+              <img src={item.image} alt={item.name} />
               <div>
-                <h4 style={{ margin: "0 0 0.25rem 0" }}>{item.name} {item.selectedOption ? `(${item.selectedOption})` : ""}</h4>
+                <h4 className="cart-item-title">{item.name}</h4>
+                <div className="cart-item-meta">
+                  {[item.selectedVariant, item.selectedOption].filter(Boolean).join(" • ") || "Standard"}
+                </div>
                 <div style={{ color: "var(--text-secondary)" }}>₹{item.price}</div>
               </div>
             </div>
             
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "#f3f4f6", padding: "0.25rem", borderRadius: "8px" }}>
-                <button onClick={() => updateQuantity(item._id, item.selectedOption, item.quantity - 1)} style={{ border: "none", background: "white", width: "28px", height: "28px", borderRadius: "4px", cursor: "pointer" }}>-</button>
+            <div className="cart-item-actions">
+              <div className="cart-qty-box">
+                <button onClick={() => updateQuantity(item._id, item.selectedVariant, item.selectedOption, item.quantity - 1)}>-</button>
                 <span style={{ width: "20px", textAlign: "center", fontWeight: "600" }}>{item.quantity}</span>
-                <button onClick={() => updateQuantity(item._id, item.selectedOption, item.quantity + 1)} style={{ border: "none", background: "white", width: "28px", height: "28px", borderRadius: "4px", cursor: "pointer" }}>+</button>
+                <button onClick={() => updateQuantity(item._id, item.selectedVariant, item.selectedOption, item.quantity + 1)}>+</button>
               </div>
               <div style={{ width: "60px", textAlign: "right", fontWeight: "600" }}>₹{item.price * item.quantity}</div>
-              <button onClick={() => removeFromCart(item._id, item.selectedOption)} style={{ color: "red", border: "none", background: "none", cursor: "pointer", fontSize: "1.2rem" }}>×</button>
+              <button onClick={() => removeFromCart(item._id, item.selectedVariant, item.selectedOption)} style={{ color: "red", border: "none", background: "none", cursor: "pointer", fontSize: "1.2rem" }}>×</button>
             </div>
           </div>
         ))}
       </div>
 
-      <div style={{ marginTop: "2rem", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "1rem", borderTop: "2px solid #f3f4f6" }}>
+      <div className="cart-total-bar">
         <h3 style={{ margin: 0 }}>Total</h3>
         <h3 style={{ margin: 0 }}>₹{cartTotal}</h3>
       </div>
